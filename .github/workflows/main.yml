@@ -2,8 +2,8 @@ name: Pinterest Daily Publishing Engine
 
 on:
   schedule:
-    - cron: '0 10 * * *'  # Automatically runs every single day at 10:00 AM UTC
-  workflow_dispatch:      # Retains manual override capability button
+    - cron: '0 10 * * *'
+  workflow_dispatch:
 
 jobs:
   run-autopilot:
@@ -16,13 +16,13 @@ jobs:
       - name: Build Python Env
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11' # Upgraded to 3.11 to clear the Python deprecation warning
 
       - name: Install System Components
-        run: pip install google-generativeai pillow requests
+        run: pip install google-genai pillow requests # Using the new Google GenAI SDK
 
       - name: Execute Autonomous Loop
-        env:
+        env: # THIS BLOCK IS CRITICAL - It bridges your GitHub secrets to the Python code
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
           PINTEREST_TOKEN: ${{ secrets.PINTEREST_TOKEN }}
