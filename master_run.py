@@ -37,7 +37,6 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 def brainstorm_daily_catalog():
     print(f"🧠 Brainstorming 1 trending viral product concept for: {TARGET_NICHE}...")
     
-    # NOTE: To scale up later, change "exactly 1" to "exactly 10" in the prompt below.
     prompt = f"""
     You are an expert digital product creator. Brainstorm exactly 1 distinct, trending digital product or template tailored to the niche: '{TARGET_NICHE}'.
     
@@ -54,14 +53,13 @@ def brainstorm_daily_catalog():
     Do not wrap the response in markdown code blocks. Output raw text only.
     """
     
-# 💡 Updated with valid models
-    models_to_try = ['gemini-3.5-flash', 'gemini-3.5-pro']
+    max_retries = 3
     
-    for model_name in models_to_try:
+    for attempt in range(max_retries):
         try:
-            print(f"🔄 Attempting generation with {model_name}...")
+            print(f"🔄 Attempting generation with gemini-3.5-flash (Attempt {attempt + 1}/{max_retries})...")
             response = client.models.generate_content(
-                model=model_name,
+                model='gemini-3.5-flash',
                 contents=prompt,
             )
             catalog = json.loads(response.text.strip())
@@ -71,19 +69,18 @@ def brainstorm_daily_catalog():
         except Exception as e:
             error_msg = str(e)
             
-            # If we hit a rate limit (429), just wait 60 seconds and try the same model again
-            if "429" in error_msg:
-                print(f"⚠️ Rate limit hit. Waiting 60 seconds to reset quota...")
-                time.sleep(60)
-                continue # Loops back and tries again
+            # If we hit a rate limit (429) or server overload (503), wait and retry
+            if "429" in error_msg or "503" in error_msg:
+                wait_time = 15 * (attempt + 1) # Waits 15s, then 30s, then 45s
+                print(f"⚠️ Server busy or rate limited. Waiting {wait_time} seconds before retrying...")
+                time.sleep(wait_time)
+                continue 
                 
-            print(f"⚠️ Warning: {model_name} failed. (Error: {error_msg[:80]}...)")
+            # If it's a completely different error, stop immediately
+            print(f"❌ Fatal Error: {error_msg[:100]}...")
+            return []
             
-            if model_name == models_to_try[-1]:
-                print("❌ CRITICAL: All AI models are currently unavailable.")
-                return []
-            time.sleep(3)
-            
+    print("❌ CRITICAL: Failed to generate after maximum retries.")
     return []
 
 # ==========================================
