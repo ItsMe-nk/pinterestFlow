@@ -36,7 +36,7 @@ def brainstorm_daily_catalog():
     2. A keyword-rich Pinterest Pin Description (under 400 characters).
     3. A highly clickable text overlay hook for the image canvas (max 5 words, no punctuation).
     4. A high-quality keyword to pull a relevant background image from Unsplash (e.g., 'workspace', 'calculator', 'notebook').
-    5. A mock target landing page checkout link (e.g., 'https://yourstore.gumroad.com/l/budget').
+    5. A mock target landing page checkout link (e.g., '[https://yourstore.gumroad.com/l/budget](https://yourstore.gumroad.com/l/budget)').
     
     Output the final result strictly as a raw JSON array matching this format structure exactly:
     [
@@ -45,18 +45,39 @@ def brainstorm_daily_catalog():
     Do not wrap the response in markdown code blocks like ```json. Output raw text only.
     """
     
-    try:
-        # NEW SDK GENERATION METHOD
-        response = client.models.generate_content(
-            model='gemini-3.5-flash',
-            contents=prompt,
-        )
-        catalog = json.loads(response.text.strip())
-        print(f"✅ Brainstorm complete! Successfully generated {len(catalog)} campaign blueprints.")
-        return catalog
-    except Exception as e:
-        print(f"❌ Failed to generate or parse output from Gemini: {e}")
-        return []
+    # 💡 The Waterfall List: The script will try these in order from top to bottom
+    models_to_try = [
+        'gemini-3.5-flash',  # Primary choice
+        'gemini-2.5-flash',  # First backup (highly reliable)
+        'gemini-2.5-pro'     # Final backup
+    ]
+    
+    for model_name in models_to_try:
+        try:
+            print(f"🔄 Attempting generation with {model_name}...")
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+            )
+            
+            catalog = json.loads(response.text.strip())
+            print(f"✅ Brainstorm complete using {model_name}! Generated {len(catalog)} blueprints.")
+            return catalog
+            
+        except Exception as e:
+            # Catch the 503 (or any other error) and prepare to try the next model
+            error_msg = str(e)
+            print(f"⚠️ Warning: {model_name} failed. Moving to backup... (Error: {error_msg[:80]}...)")
+            
+            if model_name == models_to_try[-1]:
+                # If we just failed on the very last backup model, log a critical failure
+                print("❌ CRITICAL: All backup models are currently unavailable. Exiting run.")
+                return []
+            
+            # Wait 3 seconds before hitting the next model to avoid spamming the API
+            time.sleep(3)
+            
+    return []
 
 # ==========================================
 # 3. STEP B: IMAGE DESIGN CANVAS (PILLOW)
