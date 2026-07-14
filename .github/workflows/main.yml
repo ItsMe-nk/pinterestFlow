@@ -1,35 +1,29 @@
-name: Pinterest Automation Workflow
+name: Pinterest Daily Publishing Engine
 
 on:
   schedule:
-    - cron: '0 12 * * *'  # Automatically executes every single day at 12:00 PM UTC
-  workflow_dispatch:      # Unlocks a manual "Run button" in your GitHub dashboard
+    - cron: '0 10 * * *'  # Automatically runs every single day at 10:00 AM UTC
+  workflow_dispatch:      # Retains manual override capability button
 
 jobs:
-  build-and-run:
+  run-autopilot:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code Repository
+      - name: Pull Source Code
         uses: actions/checkout@v4
 
-      - name: Initialize Python Runtime Env
+      - name: Build Python Env
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install System Engine Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install google-generativeai pillow requests
+      - name: Install System Components
+        run: pip install google-generativeai pillow requests
 
-      - name: Execute Main Script Transformation
+      - name: Execute Autonomous Loop
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}  # Binds secure repository secret to local runtime env
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
+          PINTEREST_TOKEN: ${{ secrets.PINTEREST_TOKEN }}
         run: python master_run.py
-
-      - name: Archive Generated Visual Assets
-        uses: actions/upload-artifact@v4
-        with:
-          name: generated-pinterest-pins
-          path: "*.png"   # Compiles all newly created image assets into a downloadable zip
