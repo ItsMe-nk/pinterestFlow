@@ -11,7 +11,7 @@ import google.generativeai as genai
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 IMGBB_API_KEY = os.getenv("IMGBB_API_KEY")
 PINTEREST_TOKEN = os.getenv("PINTEREST_TOKEN")
-PINTEREST_BOARD_ID = "YOUR_PINTEREST_BOARD_ID_HERE" # Put your numerical Board ID here
+PINTEREST_BOARD_ID = "1030902239643629536" # Put your numerical Board ID here
 TARGET_NICHE = "Personal Finance and Passive Income Templates"
 
 if not all([GEMINI_API_KEY, IMGBB_API_KEY, PINTEREST_TOKEN]):
