@@ -54,7 +54,8 @@ def brainstorm_daily_catalog():
     Do not wrap the response in markdown code blocks. Output raw text only.
     """
     
-    models_to_try = ['gemini-3.5-flash', 'gemini-2.5-flash']
+# 💡 Updated with valid models
+    models_to_try = ['gemini-3.5-flash', 'gemini-3.5-pro']
     
     for model_name in models_to_try:
         try:
@@ -66,9 +67,18 @@ def brainstorm_daily_catalog():
             catalog = json.loads(response.text.strip())
             print(f"✅ Brainstorm complete! Generated {len(catalog)} blueprint(s).")
             return catalog
+            
         except Exception as e:
             error_msg = str(e)
-            print(f"⚠️ Warning: {model_name} failed. Moving to backup... (Error: {error_msg[:80]}...)")
+            
+            # If we hit a rate limit (429), just wait 60 seconds and try the same model again
+            if "429" in error_msg:
+                print(f"⚠️ Rate limit hit. Waiting 60 seconds to reset quota...")
+                time.sleep(60)
+                continue # Loops back and tries again
+                
+            print(f"⚠️ Warning: {model_name} failed. (Error: {error_msg[:80]}...)")
+            
             if model_name == models_to_try[-1]:
                 print("❌ CRITICAL: All AI models are currently unavailable.")
                 return []
