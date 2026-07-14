@@ -13,7 +13,7 @@ genai.configure(api_key=GEMINI_API_KEY)
 
 def generate_pinterest_hook(product_name, product_desc):
     print(f"🤖 Fetching AI generation for: {product_name}...")
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-3.5-flash')
     prompt = f"Take product: '{product_name}' Description: '{product_desc}'. Write a high-converting Pinterest image overlay hook (max 6 words). Output ONLY the text hook, no punctuation."
     
     try:
