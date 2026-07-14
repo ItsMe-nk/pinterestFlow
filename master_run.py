@@ -2,6 +2,7 @@ import os
 import requests
 from PIL import Image, ImageDraw, ImageFont
 import google.generativeai as genai
+import time
 
 # Pull the API key securely from GitHub Environment Variables
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -52,16 +53,26 @@ def create_pin_image(product_img_url, hook_text, output_filename):
         print(f"❌ Graphics failure: {e}")
 
 if __name__ == "__main__":
-    # Your mock product catalog array (or replace with Google Sheets CSV fetch logic)
     CATALOG = [
         {
             "title": "E-Commerce Profit Spreadsheet",
             "desc": "Track your shop analytics on autopilot.",
             "url": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=1000",
             "out": "output_pin_1.png"
+        },
+        {
+            "title": "Minimalist Budget Planner",
+            "desc": "Manage your cash flow dynamically.",
+            "url": "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=1000",
+            "out": "output_pin_2.png"
         }
     ]
     
-    for item in CATALOG:
+    for index, item in enumerate(CATALOG):
+        # If it's not the first item, pause before executing the next API call
+        if index > 0:
+            print("⏳ Pausing for 12 seconds to respect Free Tier rate limits...")
+            time.sleep(12) 
+            
         hook = generate_pinterest_hook(item["title"], item["desc"])
         create_pin_image(item["url"], hook, item["out"])
