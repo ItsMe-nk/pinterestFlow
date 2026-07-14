@@ -89,11 +89,10 @@ def brainstorm_daily_catalog():
 def draw_pin_canvas(keyword, hook_text):
     output_filename = "temp_render.png"
     try:
-        # Clean keyword and use Pollinations AI with a 60-second timeout
         safe_keyword = keyword.replace(" ", "%20")
         img_url = f"https://image.pollinations.ai/prompt/aesthetic%20{safe_keyword}%20background?width=1000&height=1500&nologo=true"
         
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        headers = {'User-Agent': 'Mozilla/5.0'}
         img_data = requests.get(img_url, headers=headers, timeout=60).content
         
         with open("raw.jpg", "wb") as f:
@@ -102,18 +101,37 @@ def draw_pin_canvas(keyword, hook_text):
         base_img = Image.open("raw.jpg").convert("RGB").resize((1000, 1500), Image.Resampling.LANCZOS)
         draw = ImageDraw.Draw(base_img)
         
-        draw.rectangle([60, 120, 940, 450], fill=(255, 255, 255))
-        font = ImageFont.load_default()
+        # 1. Draw text backdrop card
+        box_coords = [60, 200, 940, 400] # Slightly smaller, positioned lower
+        draw.rectangle(box_coords, fill=(255, 255, 255))
         
-        draw.text((120, 220), hook_text.upper(), fill="#111111", font=font)
+        # 2. Load a better font (DejaVuSans is standard on GitHub runners)
+        try:
+            # We try to use a larger font size (60)
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 60)
+            cta_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 40)
+        except:
+            font = ImageFont.load_default()
+            cta_font = ImageFont.load_default()
+
+        # 3. Center the text dynamically
+        text_bbox = draw.textbbox((0, 0), hook_text.upper(), font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
         
+        x = (1000 - text_width) / 2
+        y = 250 # Centered within our box
+        draw.text((x, y), hook_text.upper(), fill="#111111", font=font)
+        
+        # 4. Better CTA Banner (White text on Red)
         draw.rectangle([0, 1420, 1000, 1500], fill="#E60023")
-        draw.text((420, 1445), "CLICK TO DOWNLOAD", fill="#FFFFFF", font=font)
+        cta_text = "CLICK TO DOWNLOAD"
+        cta_bbox = draw.textbbox((0, 0), cta_text, font=cta_font)
+        cta_x = (1000 - (cta_bbox[2] - cta_bbox[0])) / 2
+        draw.text((cta_x, 1440), cta_text, fill="#FFFFFF", font=cta_font)
         
         base_img.save(output_filename)
-        if os.path.exists("raw.jpg"): 
-            os.remove("raw.jpg")
-            
+        if os.path.exists("raw.jpg"): os.remove("raw.jpg")
         return output_filename
     except Exception as e:
         print(f"❌ Design generation error: {e}")
