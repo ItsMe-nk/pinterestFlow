@@ -85,28 +85,40 @@ def brainstorm_daily_catalog():
 def draw_pin_canvas(keyword, hook_text):
     output_filename = "temp_render.png"
     try:
-        img_url = f"[https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=1000](https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=1000)" 
-        if keyword:
-            img_url = f"[https://source.unsplash.com/featured/1000x1500/](https://source.unsplash.com/featured/1000x1500/)?{keyword}"
-            
-        img_data = requests.get(img_url, timeout=15).content
+        # 1. Clean the keyword for web use (e.g., changes 'makeup brushes' to 'makeup%20brushes')
+        safe_keyword = keyword.replace(" ", "%20")
+        
+        # 2. Use Pollinations AI to generate a custom, free 1000x1500 background image
+        img_url = f"https://image.pollinations.ai/prompt/aesthetic%20{safe_keyword}%20background?width=1000&height=1500&nologo=true"
+        
+        # 3. Add a standard web header so the image server doesn't block the automated download
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        img_data = requests.get(img_url, headers=headers, timeout=25).content
+        
         with open("raw.jpg", "wb") as f:
             f.write(img_data)
             
         base_img = Image.open("raw.jpg").convert("RGB").resize((1000, 1500), Image.Resampling.LANCZOS)
         draw = ImageDraw.Draw(base_img)
         
+        # Draw text backdrop card
         draw.rectangle([60, 120, 940, 450], fill=(255, 255, 255))
         font = ImageFont.load_default()
         
+        # Write the hook text
         draw.text((120, 220), hook_text.upper(), fill="#111111", font=font)
         
+        # Bottom branding banner
         draw.rectangle([0, 1420, 1000, 1500], fill="#E60023")
         draw.text((420, 1445), "CLICK TO DOWNLOAD", fill="#FFFFFF", font=font)
         
         base_img.save(output_filename)
-        if os.path.exists("raw.jpg"): os.remove("raw.jpg")
+        
+        if os.path.exists("raw.jpg"): 
+            os.remove("raw.jpg")
+            
         return output_filename
+        
     except Exception as e:
         print(f"❌ Design generation error: {e}")
         return None
